@@ -1,0 +1,362 @@
+classdef OficialApp < matlab.apps.AppBase
+
+    % Properties that correspond to app components
+    properties (Access = public)
+        UIFigure                    matlab.ui.Figure
+        GridLayout                  matlab.ui.container.GridLayout
+        LeftPanel                   matlab.ui.container.Panel
+        buscar                      matlab.ui.control.Button
+        buscador                    matlab.ui.control.NumericEditField
+        BuscarporIDEditFieldLabel   matlab.ui.control.Label
+        Lista                       matlab.ui.control.ListBox
+        GraficarListBoxLabel_2      matlab.ui.control.Label
+        graficarboton               matlab.ui.control.Button
+        TituloOpciones              matlab.ui.control.Label
+        RightPanel                  matlab.ui.container.Panel
+        IMC                         matlab.ui.control.EditField
+        CategoriaIMCEditFieldLabel  matlab.ui.control.Label
+        actividad                   matlab.ui.control.EditField
+        ActividadfsicaLabel         matlab.ui.control.Label
+        bebedor                     matlab.ui.control.EditField
+        BebedorLabel                matlab.ui.control.Label
+        fumador                     matlab.ui.control.EditField
+        FumadorEditFieldLabel       matlab.ui.control.Label
+        enfermo                     matlab.ui.control.EditField
+        EnfermoEditFieldLabel       matlab.ui.control.Label
+        TituloResultados            matlab.ui.control.Label
+        Graficas                    matlab.ui.control.UIAxes
+    end
+
+    % Properties that correspond to apps with auto-reflow
+    properties (Access = private)
+        onePanelWidth = 576;
+    end
+
+    % Callbacks that handle component events
+    methods (Access = private)
+
+        % Code that executes after component creation
+        function startupFcn(app)
+%1. Se importa la tabla a matlab.
+
+
+%2. Guarda la variable en tu carpeta de trabajo con el nombre HeartData.mat.
+app.heart_data = readtable('HeartData.mat/heart_data.csv');
+
+
+%3. Acá se cambia la edad de dias a años.
+heart_data.age = heart_data.age / 365;
+
+
+%4. Acá Cambia las variables que se encuentran en código binario (0, 1) 
+% a un texto descriptivo.
+
+
+%Acá se cambian los binarios de los fumadores, 0 = no fuma y 1 = Si fuma.
+heart_data.smoke = categorical(heart_data.smoke, [0 1], {'No fuma', 'Si fuma'});
+
+
+%Acá se cambian los binarios de los bebedores, 0 = no bebe y 1 = Si bebe.
+heart_data.alco = categorical(heart_data.alco, [0 1], {'No bebe', 'Si bebe'});
+
+
+%Acá se cambian los binarios de los que hacen actividad física, 0 = Sin actividad
+%física y 1 = Con actividad física.
+heart_data.active = categorical(heart_data.active, [0 1], {'Sin actividad física', 'Con actividad física'});
+
+%Acá se cambian los binarios de los enfermos, 0 = Sano y 1 = Enfermo.
+heart_data.cardio = categorical(heart_data.cardio, [0 1], {'Sano', 'Enfermo'});
+
+%Primero se pasa la altura de cm a m.
+heart_data.height = heart_data.height / 100;
+
+
+% Acá calculamos el IMC.
+heart_data.IMC = heart_data.weight ./ (heart_data.height.^2);
+
+
+% Acá se clacifica el IMC segun la OMS.
+
+
+%Acá se definen los rangos de IMC (Van de par y termina en infinito).
+bins = [0 18.5 24.9 29.9 Inf];
+
+
+%Acá se crean las etiquetas para los rangos del IMC.
+labels = {'Bajo peso', 'Normal', 'Sobrepeso', 'Obeso'};
+
+
+%Acá se categorizan los valores en las direntes etiquetas con sus
+%respectivos intervalos.
+heart_data.IMC_result = discretize(heart_data.IMC, bins, 'categorical', labels);
+
+
+% Calcular la presión arterial media = (Presión sitólica + 2 * Presión
+% diastólica) / 3
+heart_data.PreArtMed = (heart_data.ap_hi + (2 * heart_data.ap_lo)) / 3;
+
+        end
+
+        % Value changed function: Lista
+        function ListaValueChanged(app, event)
+
+        end
+
+        % Button pushed function: graficarboton
+        function graficarbotonPushed(app, event)
+            %Acá programamos el boton graficar
+            
+        end
+
+        % Button pushed function: buscar
+        function buscarButtonPushed(app, event)
+
+        end
+
+        % Changes arrangement of the app based on UIFigure width
+        function updateAppLayout(app, event)
+            currentFigureWidth = app.UIFigure.Position(3);
+            if(currentFigureWidth <= app.onePanelWidth)
+                % Change to a 2x1 grid
+                app.GridLayout.RowHeight = {471, 471};
+                app.GridLayout.ColumnWidth = {'1x'};
+                app.RightPanel.Layout.Row = 2;
+                app.RightPanel.Layout.Column = 1;
+            else
+                % Change to a 1x2 grid
+                app.GridLayout.RowHeight = {'1x'};
+                app.GridLayout.ColumnWidth = {259, '1x'};
+                app.RightPanel.Layout.Row = 1;
+                app.RightPanel.Layout.Column = 2;
+            end
+        end
+    end
+
+    % Component initialization
+    methods (Access = private)
+
+        % Create UIFigure and components
+        function createComponents(app)
+
+            % Create UIFigure and hide until all components are created
+            app.UIFigure = uifigure('Visible', 'off');
+            app.UIFigure.AutoResizeChildren = 'off';
+            app.UIFigure.Position = [100 100 850 471];
+            app.UIFigure.Name = 'MATLAB App';
+            app.UIFigure.SizeChangedFcn = createCallbackFcn(app, @updateAppLayout, true);
+
+            % Create GridLayout
+            app.GridLayout = uigridlayout(app.UIFigure);
+            app.GridLayout.ColumnWidth = {259, '1x'};
+            app.GridLayout.RowHeight = {'1x'};
+            app.GridLayout.ColumnSpacing = 0;
+            app.GridLayout.RowSpacing = 0;
+            app.GridLayout.Padding = [0 0 0 0];
+            app.GridLayout.Scrollable = 'on';
+
+            % Create LeftPanel
+            app.LeftPanel = uipanel(app.GridLayout);
+            app.LeftPanel.ForegroundColor = [0.9412 0.6118 0.6118];
+            app.LeftPanel.BackgroundColor = [0.9412 0.7333 0.7333];
+            app.LeftPanel.Layout.Row = 1;
+            app.LeftPanel.Layout.Column = 1;
+
+            % Create TituloOpciones
+            app.TituloOpciones = uilabel(app.LeftPanel);
+            app.TituloOpciones.HorizontalAlignment = 'center';
+            app.TituloOpciones.FontName = 'Impact';
+            app.TituloOpciones.FontSize = 36;
+            app.TituloOpciones.Position = [26 405 208 47];
+            app.TituloOpciones.Text = 'Opciones';
+
+            % Create graficarboton
+            app.graficarboton = uibutton(app.LeftPanel, 'push');
+            app.graficarboton.ButtonPushedFcn = createCallbackFcn(app, @graficarbotonPushed, true);
+            app.graficarboton.FontWeight = 'bold';
+            app.graficarboton.Position = [55 251 149 27];
+            app.graficarboton.Text = 'Graficar selección';
+
+            % Create GraficarListBoxLabel_2
+            app.GraficarListBoxLabel_2 = uilabel(app.LeftPanel);
+            app.GraficarListBoxLabel_2.BackgroundColor = [0.8902 0.4902 0.4902];
+            app.GraficarListBoxLabel_2.HorizontalAlignment = 'center';
+            app.GraficarListBoxLabel_2.FontName = 'Terminal';
+            app.GraficarListBoxLabel_2.FontSize = 16;
+            app.GraficarListBoxLabel_2.FontWeight = 'bold';
+            app.GraficarListBoxLabel_2.Position = [26 308 67 36];
+            app.GraficarListBoxLabel_2.Text = 'Graficar';
+
+            % Create Lista
+            app.Lista = uilistbox(app.LeftPanel);
+            app.Lista.Items = {'Seleccionar', 'Gráfica de barras', 'Gráfica de dispersión'};
+            app.Lista.ValueChangedFcn = createCallbackFcn(app, @ListaValueChanged, true);
+            app.Lista.FontName = 'Terminal';
+            app.Lista.FontSize = 14;
+            app.Lista.BackgroundColor = [0.8902 0.4902 0.4902];
+            app.Lista.Position = [94 295 144 62];
+            app.Lista.Value = 'Seleccionar';
+
+            % Create BuscarporIDEditFieldLabel
+            app.BuscarporIDEditFieldLabel = uilabel(app.LeftPanel);
+            app.BuscarporIDEditFieldLabel.HorizontalAlignment = 'right';
+            app.BuscarporIDEditFieldLabel.FontName = 'Terminal';
+            app.BuscarporIDEditFieldLabel.FontSize = 16;
+            app.BuscarporIDEditFieldLabel.FontWeight = 'bold';
+            app.BuscarporIDEditFieldLabel.Position = [40 148 110 22];
+            app.BuscarporIDEditFieldLabel.Text = 'Buscar por ID';
+
+            % Create buscador
+            app.buscador = uieditfield(app.LeftPanel, 'numeric');
+            app.buscador.HorizontalAlignment = 'center';
+            app.buscador.FontName = 'Terminal';
+            app.buscador.FontSize = 16;
+            app.buscador.FontWeight = 'bold';
+            app.buscador.Position = [165 139 39 39];
+
+            % Create buscar
+            app.buscar = uibutton(app.LeftPanel, 'push');
+            app.buscar.ButtonPushedFcn = createCallbackFcn(app, @buscarButtonPushed, true);
+            app.buscar.FontWeight = 'bold';
+            app.buscar.Position = [71 90 117 27];
+            app.buscar.Text = 'Buscar';
+
+            % Create RightPanel
+            app.RightPanel = uipanel(app.GridLayout);
+            app.RightPanel.BackgroundColor = [0.949 0.6667 0.6667];
+            app.RightPanel.Layout.Row = 1;
+            app.RightPanel.Layout.Column = 2;
+
+            % Create Graficas
+            app.Graficas = uiaxes(app.RightPanel);
+            title(app.Graficas, 'Title')
+            xlabel(app.Graficas, 'X')
+            ylabel(app.Graficas, 'Y')
+            zlabel(app.Graficas, 'Z')
+            app.Graficas.Position = [91 154 410 252];
+
+            % Create TituloResultados
+            app.TituloResultados = uilabel(app.RightPanel);
+            app.TituloResultados.HorizontalAlignment = 'center';
+            app.TituloResultados.FontName = 'Impact';
+            app.TituloResultados.FontSize = 36;
+            app.TituloResultados.Position = [192 405 208 47];
+            app.TituloResultados.Text = 'Resultados';
+
+            % Create EnfermoEditFieldLabel
+            app.EnfermoEditFieldLabel = uilabel(app.RightPanel);
+            app.EnfermoEditFieldLabel.HorizontalAlignment = 'right';
+            app.EnfermoEditFieldLabel.FontName = 'Terminal';
+            app.EnfermoEditFieldLabel.FontSize = 16;
+            app.EnfermoEditFieldLabel.FontWeight = 'bold';
+            app.EnfermoEditFieldLabel.Position = [59 110 75 22];
+            app.EnfermoEditFieldLabel.Text = 'Enfermo:';
+
+            % Create enfermo
+            app.enfermo = uieditfield(app.RightPanel, 'text');
+            app.enfermo.Editable = 'off';
+            app.enfermo.FontName = 'Terminal';
+            app.enfermo.FontSize = 16;
+            app.enfermo.FontWeight = 'bold';
+            app.enfermo.Position = [149 102 126 38];
+
+            % Create FumadorEditFieldLabel
+            app.FumadorEditFieldLabel = uilabel(app.RightPanel);
+            app.FumadorEditFieldLabel.HorizontalAlignment = 'right';
+            app.FumadorEditFieldLabel.FontName = 'Terminal';
+            app.FumadorEditFieldLabel.FontSize = 16;
+            app.FumadorEditFieldLabel.FontWeight = 'bold';
+            app.FumadorEditFieldLabel.Position = [55 73 79 22];
+            app.FumadorEditFieldLabel.Text = 'Fumador:';
+
+            % Create fumador
+            app.fumador = uieditfield(app.RightPanel, 'text');
+            app.fumador.Editable = 'off';
+            app.fumador.FontName = 'Terminal';
+            app.fumador.FontSize = 16;
+            app.fumador.FontWeight = 'bold';
+            app.fumador.Position = [149 65 126 38];
+
+            % Create BebedorLabel
+            app.BebedorLabel = uilabel(app.RightPanel);
+            app.BebedorLabel.HorizontalAlignment = 'right';
+            app.BebedorLabel.FontName = 'Terminal';
+            app.BebedorLabel.FontSize = 16;
+            app.BebedorLabel.FontWeight = 'bold';
+            app.BebedorLabel.Position = [59 36 75 22];
+            app.BebedorLabel.Text = 'Bebedor:';
+
+            % Create bebedor
+            app.bebedor = uieditfield(app.RightPanel, 'text');
+            app.bebedor.Editable = 'off';
+            app.bebedor.FontName = 'Terminal';
+            app.bebedor.FontSize = 16;
+            app.bebedor.FontWeight = 'bold';
+            app.bebedor.Position = [149 28 126 38];
+
+            % Create ActividadfsicaLabel
+            app.ActividadfsicaLabel = uilabel(app.RightPanel);
+            app.ActividadfsicaLabel.HorizontalAlignment = 'right';
+            app.ActividadfsicaLabel.FontName = 'Terminal';
+            app.ActividadfsicaLabel.FontSize = 16;
+            app.ActividadfsicaLabel.FontWeight = 'bold';
+            app.ActividadfsicaLabel.Position = [293 92 128 22];
+            app.ActividadfsicaLabel.Text = 'Actividad física:';
+
+            % Create actividad
+            app.actividad = uieditfield(app.RightPanel, 'text');
+            app.actividad.Editable = 'off';
+            app.actividad.FontName = 'Terminal';
+            app.actividad.FontSize = 16;
+            app.actividad.FontWeight = 'bold';
+            app.actividad.Position = [436 84 126 38];
+
+            % Create CategoriaIMCEditFieldLabel
+            app.CategoriaIMCEditFieldLabel = uilabel(app.RightPanel);
+            app.CategoriaIMCEditFieldLabel.HorizontalAlignment = 'right';
+            app.CategoriaIMCEditFieldLabel.FontName = 'Terminal';
+            app.CategoriaIMCEditFieldLabel.FontSize = 16;
+            app.CategoriaIMCEditFieldLabel.FontWeight = 'bold';
+            app.CategoriaIMCEditFieldLabel.Position = [303 55 118 22];
+            app.CategoriaIMCEditFieldLabel.Text = 'Categoria IMC:';
+
+            % Create IMC
+            app.IMC = uieditfield(app.RightPanel, 'text');
+            app.IMC.Editable = 'off';
+            app.IMC.FontName = 'Terminal';
+            app.IMC.FontSize = 16;
+            app.IMC.FontWeight = 'bold';
+            app.IMC.Position = [436 47 126 38];
+
+            % Show the figure after all components are created
+            app.UIFigure.Visible = 'on';
+        end
+    end
+
+    % App creation and deletion
+    methods (Access = public)
+
+        % Construct app
+        function app = OficialApp
+
+            % Create UIFigure and components
+            createComponents(app)
+
+            % Register the app with App Designer
+            registerApp(app, app.UIFigure)
+
+            % Execute the startup function
+            runStartupFcn(app, @startupFcn)
+
+            if nargout == 0
+                clear app
+            end
+        end
+
+        % Code that executes before app deletion
+        function delete(app)
+
+            % Delete UIFigure when app is deleted
+            delete(app.UIFigure)
+        end
+    end
+end
