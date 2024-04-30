@@ -1,0 +1,42 @@
+Trabajo Autonomo
+
+%Carga base de datos
+load census;
+% Para el grado polinomio 1
+g1 = polyfit(cdate,pop, 1);
+fit1 = polyval(g1, cdate);
+
+% Para el grado polinomio 2
+g2 = polyfit(cdate,pop, 2);
+fit2 = polyval(g2, cdate);
+
+% Para el grado polinomio 3
+g3 = polyfit(cdate, pop, 3);
+fit3 = polyval(g3, cdate);
+
+% Gráfica de dispersión
+scatter(cdate, pop); 
+hold on;
+fplot(@(x) polyval(g1,x), [min(cdate), max(cdate)], 'g'); 
+fplot(@(x) polyval(g2,x), [min(cdate), max(cdate)], 'r'); 
+fplot(@(x) polyval(g3,x), [min(cdate), max(cdate)], 'm'); 
+hold off;
+%Especificaciones de la grafica
+xlabel('Año');
+ylabel('Población');
+title('Ajuste Polinomial');
+legend('Datos', 'Ajuste Lineal', 'Ajuste Cuadrático', 'Ajuste Cúbico');
+
+% Calculos del error cuadratico
+x1 = polyval(g1, cdate); 
+x2 = polyval(g2, cdate); 
+x3 = polyval(g3, cdate); %
+
+MSE1 = mean((pop - x1).^2);
+MSE2 = mean((pop- x2).^2);
+MSE3 = mean((pop- x3).^2);
+
+%Presentacion de error cuadratico medio 
+disp(['Error cuadrático medio grado 1: ', num2str(MSE1)]);
+disp(['Error cuadrático medio grado 2: ', num2str(MSE2)]);
+disp(['Error cuadrático medio grado 3: ', num2str(MSE3)]); 
